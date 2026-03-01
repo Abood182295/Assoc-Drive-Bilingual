@@ -1,0 +1,117 @@
+/* Professional Arabic UI for Assoc. Drive */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+:root {
+    --primary-color: #007bff;
+    --bg-color: #f8f9fa;
+    --sidebar-width: 280px;
+    --text-main: #333;
+    --text-muted: #6c757d;
+}
+
+body {
+    display: flex;
+    margin: 0;
+    font-family: 'Cairo', sans-serif;
+    background-color: #f8f9fa;
+    direction: rtl;
+}
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-direction: row-reverse; /* Aligns avatar and name for Arabic RTL */
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #007bff; /* Primary brand color */
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+/* Sidebar - Fixed to the Right */
+.sidebar {
+    width: 260px;
+    background: #fff;
+    height: 100vh;
+    position: fixed;
+    right: 0; 
+    top: 0;
+    border-left: 1px solid #eee;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.sidebar h2 {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 22px;
+    margin-bottom: 30px;
+}
+
+/* Navigation Links */
+nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: var(--text-main);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+nav a i {
+    margin-left: 12px; 
+    margin-right: 0;
+    font-size: 20px;
+}
+
+nav a:hover, nav a.active {
+    background: #f0f7ff;
+    color: var(--primary-color);
+}
+
+/* Main Content Area - Shifted to make room for Right Sidebar */
+.main-content {
+    margin-right: 280px;
+    margin-left: 0;
+    flex: 1;
+    padding: 40px;
+}
+
+/* Header & Controls */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.search-container {
+    position: relative;
+    width: 350px;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 10px 40px 10px 15px; /* Padding-right for the search icon */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-align: right;
+}
+
+/* File Grid Mirroring */
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    direction: rtl; 
+}
