@@ -1,4 +1,3 @@
-/* Professional Arabic UI for Assoc. Drive */
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 
 :root {
@@ -9,13 +8,26 @@
     --text-muted: #6c757d;
 }
 
+/* =========================================
+   1. BASE TYPOGRAPHY & LAYOUT
+   ========================================= */
 body {
     display: flex;
     margin: 0;
     font-family: 'Cairo', sans-serif;
-    background-color: #f8f9fa;
+    background-color: var(--bg-color);
     direction: rtl;
+    /* Fluid Typography: Scales smoothly between devices */
+    font-size: clamp(0.875rem, 1vw + 0.5rem, 1.125rem); 
 }
+
+h2 {
+    font-size: clamp(1.2rem, 2vw + 1rem, 2rem);
+}
+
+/* =========================================
+   2. USER PROFILE & AVATAR
+   ========================================= */
 .user-profile {
     display: flex;
     align-items: center;
@@ -26,7 +38,7 @@ body {
 .avatar-circle {
     width: 40px;
     height: 40px;
-    background-color: #007bff; /* Primary brand color */
+    background-color: var(--primary-color);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -36,7 +48,10 @@ body {
     font-size: 14px;
     text-transform: uppercase;
 }
-/* Sidebar - Fixed to the Right */
+
+/* =========================================
+   3. SIDEBAR (DESKTOP)
+   ========================================= */
 .sidebar {
     width: 260px;
     background: #fff;
@@ -52,7 +67,6 @@ body {
 .sidebar h2 {
     text-align: center;
     color: var(--primary-color);
-    font-size: 22px;
     margin-bottom: 30px;
 }
 
@@ -79,12 +93,15 @@ nav a:hover, nav a.active {
     color: var(--primary-color);
 }
 
-/* Main Content Area - Shifted to make room for Right Sidebar */
+/* =========================================
+   4. MAIN CONTENT AREA
+   ========================================= */
 .main-content {
-    margin-right: 280px;
+    margin-right: var(--sidebar-width);
     margin-left: 0;
     flex: 1;
     padding: 40px;
+    box-sizing: border-box;
 }
 
 /* Header & Controls */
@@ -106,6 +123,7 @@ nav a:hover, nav a.active {
     border: 1px solid #ddd;
     border-radius: 8px;
     text-align: right;
+    font-family: inherit;
 }
 
 /* File Grid Mirroring */
@@ -114,4 +132,130 @@ nav a:hover, nav a.active {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
     direction: rtl; 
+}
+
+/* =========================================
+   5. MOBILE RESPONSIVENESS (PHONES & TABLETS)
+   ========================================= */
+@media screen and (max-width: 768px) {
+    /* Stack layout vertically instead of side-by-side */
+    body {
+        flex-direction: column;
+    }
+
+    /* Transform Sidebar to Top Navigation */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        right: auto;
+        border-left: none;
+        border-bottom: 1px solid #eee;
+        padding: 15px;
+        box-sizing: border-box;
+    }
+
+    .sidebar h2 {
+        margin-bottom: 15px;
+    }
+
+    /* Make Navigation Scrollable Horizontally */
+    nav {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        gap: 10px;
+        padding-bottom: 10px;
+    }
+
+    nav a {
+        margin-bottom: 0;
+        padding: 10px 15px;
+    }
+
+    /* Expand Main Content to Full Width */
+    .main-content {
+        margin-right: 0;
+        width: 100%;
+        padding: 20px;
+    }
+
+    /* Stack Search Bar Underneath Title */
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .search-container {
+        width: 100%;
+    }
+
+    /* Adjust grids for smaller screens */
+    .file-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 15px;
+    }
+ /* 1. The Main Dropdown Container */
+.search-suggestions-box {
+    position: absolute;
+    top: calc(100% + 5px); /* Small gap below the search bar */
+    right: 0;
+    left: 0;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    z-index: 9999; /* Ensures it stays above folders and file cards */
+    display: none; /* Controlled by the JavaScript logic */
+    max-height: 300px; /* Prevents long lists from breaking the layout */
+    overflow-y: auto; /* Adds a scrollbar if there are many matches */
+}
+
+/* 2. Individual Suggestion Items */
+.suggestion-item {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    border-bottom: 1px solid #f9f9f9;
+    text-align: right; /* Keeps Arabic text properly aligned */
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* 3. Hover and Icon Styling */
+.suggestion-item:hover {
+    background: #f0f7ff;
+    color: #007bff;
+}
+
+.suggestion-item i {
+    font-size: 20px;
+    color: #007bff;
+}
+
+.suggestion-item span {
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Gracefully cuts off very long filenames */
+}
+
+/* 4. Mobile Refinement */
+@media screen and (max-width: 768px) {
+    .search-suggestions-box {
+        position: fixed; /* On mobile, it's easier to view if it stays pinned */
+        top: 130px; /* Adjusted for the mobile header height */
+        left: 15px;
+        right: 15px;
+        width: auto;
+    }
+}
 }

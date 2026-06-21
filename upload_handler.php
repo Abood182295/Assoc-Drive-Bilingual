@@ -1,5 +1,5 @@
 <?php
-// Display errors for your Hail local dev environment
+// Display errors for your local dev environment
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -20,68 +20,106 @@ if ($conn->connect_error) {
     exit();
 }
 
-// 3. Security Check: Ensure user is logged in
+// 3. Helper Function: Map extensions to Folder Names
+function getTargetFolder($extension) {
+    $extension = strtolower($extension);
+    
+    // Grouped by category for clean code and easy maintenance
+    $folders = [
+        // ==================== AUDIO ====================
+        'mp3' => 'Audio', 'm4a' => 'Audio', 'ogg' => 'Audio', 'wav' => 'Audio', 
+        'flac' => 'Audio', 'aac' => 'Audio', 'opus' => 'Audio', 'wma' => 'Audio', 
+        'alac' => 'Audio', 'aiff' => 'Audio', 'dsd' => 'Audio', 'pcm' => 'Audio', 
+        'mka' => 'Audio', 'tta' => 'Audio', 'wv' => 'Audio', 'ape' => 'Audio', 
+        'spx' => 'Audio', 'caf' => 'Audio', 'amr' => 'Audio', 'mid' => 'Audio', 
+        'midi' => 'Audio', 'xmf' => 'Audio', 'rmi' => 'Audio', 'kar' => 'Audio', 
+        's3m' => 'Audio', 'xm' => 'Audio', 'it' => 'Audio', 'mod' => 'Audio',
+
+        // ==================== VIDEOS ====================
+        'mp4' => 'Videos', 'mkv' => 'Videos', 'avi' => 'Videos', 'mov' => 'Videos', 
+        'webm' => 'Videos', 'flv' => 'Videos', 'wmv' => 'Videos', 'mpeg' => 'Videos', 
+        'mpg' => 'Videos', 'm4v' => 'Videos', '3gp' => 'Videos', 'vob' => 'Videos', 
+        'rmvb' => 'Videos',
+
+        // ==================== IMAGES ====================
+        'png' => 'Images', 'jpg' => 'Images', 'jpeg' => 'Images', 'gif' => 'Images', 
+        'bmp' => 'Images', 'tiff' => 'Images', 'tif' => 'Images', 'svg' => 'Images', 
+        'webp' => 'Images', 'ico' => 'Images', 'icns' => 'Images', 'heic' => 'Images', 
+        'heif' => 'Images', 'jfif' => 'Images', 'psd' => 'Images', 'raw' => 'Images', 
+        'arw' => 'Images', 'eps' => 'Images', 'ai' => 'Images',
+
+        // ================= DOCUMENTS =================
+        'pdf' => 'Documents', 'doc' => 'Documents', 'docx' => 'Documents', 
+        'txt' => 'Documents', 'rtf' => 'Documents', 'ppt' => 'Documents', 
+        'pptx' => 'Documents', 'odt' => 'Documents',
+        
+        // ================= EXCEL FILES =================
+        'xlsx' => 'Excel Files', 'xls' => 'Excel Files', 'csv' => 'Excel Files', 'ods' => 'Excel Files'
+    ];
+
+    // Returns the correct folder, or 'Other Files' if it's a completely unknown format
+    return isset($folders[$extension]) ? $folders[$extension] : 'Other Files';
+}
+
+// 4. Security Check
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'User not logged in']);
     exit();
 }
 
-// 4. Handle Upload (Both Button and Drag & Drop)
-// We check for $_FILES['file'] which covers both methods
+// 5. Handle Upload
 if (isset($_FILES['file'])) {
-    
     $user_id = $_SESSION['user_id'];
     $file = $_FILES['file'];
-
-    // Capture folder_id from the AJAX request
-    $folder_id = (!empty($_POST['folder_id']) && $_POST['folder_id'] !== 'null') ? (int)$_POST['folder_id'] : null;
-
     $fileName = $file['name'];
     $fileTmpName = $file['tmp_name'];
     $fileSize = $file['size'];
     $fileError = $file['error'];
 
-    // Generate Unique Path
+    // Generate Extension and Dynamic Folder Name
     $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    $folderName = getTargetFolder($fileExt);
+
+    // --- AUTOMATIC FOLDER ROUTING ---
+    // A. Check if folder exists
+    $stmtFolder = $conn->prepare("SELECT folder_id FROM folders WHERE folder_name = ? AND user_id = ?");
+    $stmtFolder->bind_param("si", $folderName, $user_id);
+    $stmtFolder->execute();
+    $resFolder = $stmtFolder->get_result();
+
+    if ($resFolder->num_rows > 0) {
+        $target_folder_id = $resFolder->fetch_assoc()['folder_id'];
+    } else {
+        // B. Create if missing
+        $stmtInsFolder = $conn->prepare("INSERT INTO folders (folder_name, user_id) VALUES (?, ?)");
+        $stmtInsFolder->bind_param("si", $folderName, $user_id);
+        $stmtInsFolder->execute();
+        $target_folder_id = $stmtInsFolder->insert_id;
+    }
+
+    // Generate Unique Path
     $newFileName = uniqid('', true) . "." . $fileExt;
-    $uploadDirectory = 'uploads/'; 
-    $destination = $uploadDirectory . $newFileName;
+    $destination = 'uploads/' . $newFileName;
 
     if ($fileError === 0) {
-        // Create directory if missing
-        if (!is_dir($uploadDirectory)) {
-            mkdir($uploadDirectory, 0755, true);
-        }
+        if (!is_dir('uploads/')) mkdir('uploads/', 0755, true);
 
         if (move_uploaded_file($fileTmpName, $destination)) {
-            // Category Logic
-            $category = 'general';
-            if (in_array($fileExt, ['pdf', 'doc', 'docx'])) {
-                $category = 'books';
-            } elseif (in_array($fileExt, ['mp4', 'mp3', 'png', 'jpg', 'jpeg'])) {
-                $category = 'media';
-            }
+            // Category for Sidebar
+            $category = (in_array($fileExt, ['mp4', 'mkv', 'mp3', 'png', 'jpg'])) ? 'media' : 'books';
 
-            // 5. Save Record (Includes folder_id and file_size)
+            // 6. Save Final Record
             $sql = "INSERT INTO files (user_id, folder_id, file_name, file_path, file_size, category, is_deleted) VALUES (?, ?, ?, ?, ?, ?, 0)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iissis", $user_id, $folder_id, $fileName, $destination, $fileSize, $category);
+            $stmt->bind_param("iissis", $user_id, $target_folder_id, $fileName, $destination, $fileSize, $category);
             
             if ($stmt->execute()) {
-                // IMPORTANT: Return JSON for AJAX to stop the "Uploading..." hang
                 echo json_encode(['success' => true]);
                 exit();
             } else {
-                echo json_encode(['success' => false, 'message' => 'Database Error: ' . $stmt->error]);
+                echo json_encode(['success' => false, 'message' => 'DB Error: ' . $stmt->error]);
             }
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to move file. Check permissions.']);
         }
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Upload Error Code: ' . $fileError]);
     }
-} else {
-    // If accessed directly without a file
-    echo json_encode(['success' => false, 'message' => 'No file received.']);
 }
 ?>

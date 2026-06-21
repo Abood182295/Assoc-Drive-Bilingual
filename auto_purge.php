@@ -30,4 +30,6 @@ if ($result->num_rows > 0) {
         $conn->query("DELETE FROM files WHERE file_id = '$id'");
     }
 }
+$old_folders_sql = "DELETE FROM folders WHERE is_deleted = 1 AND deleted_at < NOW() - INTERVAL 30 DAY";
+$conn->query($old_folders_sql);
 ?>

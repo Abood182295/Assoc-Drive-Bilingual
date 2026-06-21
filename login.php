@@ -1,12 +1,19 @@
 <?php
 session_start();
 include 'init_lang.php'; // 1. Global translation logic
+
+// If already logged in, redirect to dashboard
+if (isset($_SESSION['user_id'])) {
+    header("Location: dashboard.php");
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="<?php echo $curr_lang; ?>" dir="<?php echo $dir; ?>">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $lang['site_title']; ?> - Login</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>

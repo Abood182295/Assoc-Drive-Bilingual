@@ -1,54 +1,80 @@
 <?php
 session_start();
 include 'init_lang.php'; // Global translation logic
-// 2. Database Connection (Port 3307)
-$host = 'localhost:3307';
-$user = 'root';
-$pass = ''; 
-$db   = 'association_drive';
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-if (isset($_POST['signup'])) {
-    $name = $_POST['full_name'];
-    $email = $_POST['email'];
-    $plain_pass = $_POST['password'];
-
-    // 1. Hash the password for security
-    $hashed_pass = password_hash($plain_pass, PASSWORD_DEFAULT);
-
-    // 2. Insert the HASHED password into the database
-    $stmt = $conn->prepare("INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $name, $email, $hashed_pass);
-    
-    if ($stmt->execute()) {
-        header("Location: login.php?signup=success");
-    }
-}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo $curr_lang; ?>" dir="<?php echo $dir; ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Signup - Assoc. Drive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo ($curr_lang == 'ar' ? 'إنشاء حساب - أسوشيت درايف' : 'Signup - Assoc. Drive'); ?></title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .signup-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { text-align: center; color: #333; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-signup { width: 100%; padding: 12px; background: #007bff; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .btn-signup:hover { background: #0056b3; }
-        .login-link { text-align: center; margin-top: 20px; font-size: 14px; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        
+        /* Responsive Body */
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: #f8f9fa; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px; /* Prevents touching edges on small mobile screens */
+            box-sizing: border-box;
+        }
+
+        /* Fluid Container */
+        .signup-container { 
+            background: white; 
+            /* clamp() smoothly scales padding based on screen size */
+            padding: clamp(25px, 5vw, 40px); 
+            border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            width: 100%; 
+            max-width: 450px; 
+        }
+
+        h2 { text-align: center; color: #333; margin-bottom: 30px; font-size: clamp(1.5rem, 3vw, 1.8rem); }
+        
+        .input-group { margin-bottom: 20px; text-align: <?php echo ($curr_lang == 'ar' ? 'right' : 'left'); ?>; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 0.95rem; }
+        .input-group input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        .input-group input:focus { border-color: #007bff; outline: none; }
+
+        .btn-signup { 
+            width: 100%; 
+            padding: 14px; 
+            background: #007bff; 
+            border: none; 
+            color: white; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-family: inherit;
+            transition: 0.3s; 
+        }
+        .btn-signup:hover { background: #0056b3; transform: translateY(-2px); }
+        
+        .login-link { text-align: center; margin-top: 25px; font-size: 0.95rem; color: #666; }
+        .login-link a { color: #007bff; text-decoration: none; font-weight: 600; }
+        .login-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-<div class="signup-box">
-    <h2><i class='bx bx-user-plus'></i> 
+
+<div class="signup-container">
+    <h2><i class='bx bx-user-plus' style="color: #007bff;"></i> 
         <?php echo ($curr_lang == 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'); ?>
     </h2>
     
@@ -73,15 +99,16 @@ if (isset($_POST['signup'])) {
             <input type="password" name="password" required placeholder="<?php echo ($curr_lang == 'ar' ? 'أنشئ كلمة مرور' : 'Create a password'); ?>">
         </div>
 
-        <button type="submit" name="signup" class="btn-primary">
+        <button type="submit" name="signup" class="btn-signup">
             <?php echo ($curr_lang == 'ar' ? 'إنشاء الحساب' : 'Sign Up'); ?>
         </button>
     </form>
 
-    <div class="login-link" style="text-align: center; margin-top: 20px;">
+    <div class="login-link">
         <?php echo ($curr_lang == 'ar' ? 'لديك حساب بالفعل؟' : 'Already have an account?'); ?> 
         <a href="login.php"><?php echo ($curr_lang == 'ar' ? 'سجل دخولك هنا' : 'Login here'); ?></a>
     </div>
 </div>
+
 </body>
 </html>

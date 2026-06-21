@@ -1,4 +1,5 @@
 <?php
+session_start();
 include 'init_lang.php'; 
 
 if (!isset($_SESSION['user_id'])) {
@@ -22,7 +23,6 @@ if (isset($_POST['update_settings'])) {
     $new_email = $conn->real_escape_string($_POST['email']);
     $new_pass  = $_POST['new_password'];
 
-    // FIXED: Using 'user_id' to match your database
     $update_sql = "UPDATE users SET full_name = '$new_name', email = '$new_email' WHERE user_id = '$current_uid'";
     $conn->query($update_sql);
     
@@ -36,7 +36,6 @@ if (isset($_POST['update_settings'])) {
 }
 
 // 2. Fetch User Data for the Form
-// FIXED: Query updated for line 36 error
 $user_query = $conn->query("SELECT full_name, email FROM users WHERE user_id = '$current_uid'");
 $user_data  = $user_query->fetch_assoc();
 ?>
@@ -45,25 +44,120 @@ $user_data  = $user_query->fetch_assoc();
 <html lang="<?php echo $curr_lang; ?>" dir="<?php echo $dir; ?>">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $lang['settings']; ?></title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { font-family: <?php echo $font_family; ?>; background-color: #f8f9fa; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: #fff; height: 100vh; padding: 25px; position: fixed; 
-                   <?php echo ($curr_lang == 'ar' ? 'right: 0; border-left: 1px solid #ddd;' : 'left: 0; border-right: 1px solid #ddd;'); ?> }
-        .main-content { <?php echo ($curr_lang == 'ar' ? 'margin-right: 260px;' : 'margin-left: 260px;'); ?> padding: 40px; width: 100%; }
-        .settings-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 600px; }
-        .form-group { margin-bottom: 20px; text-align: <?php echo ($curr_lang == 'ar' ? 'right' : 'left'); ?>; }
-        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
-        .btn-save { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: <?php echo $font_family; ?>; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            display: flex; 
+            /* Fluid Typography */
+            font-size: clamp(0.875rem, 1vw + 0.5rem, 1.125rem);
+        }
+
+        .sidebar { 
+            width: 260px; 
+            background: #fff; 
+            height: 100vh; 
+            padding: 25px; 
+            position: fixed; 
+            <?php echo ($curr_lang == 'ar' ? 'right: 0; border-left: 1px solid #ddd;' : 'left: 0; border-right: 1px solid #ddd;'); ?> 
+        }
+
+        .main-content { 
+            <?php echo ($curr_lang == 'ar' ? 'margin-right: 260px;' : 'margin-left: 260px;'); ?> 
+            padding: clamp(20px, 4vw, 40px); 
+            width: calc(100% - 260px); 
+        }
+
+        .settings-card { 
+            background: white; 
+            padding: clamp(20px, 5vw, 30px); 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            max-width: 600px; 
+            width: 100%;
+        }
+
+        h2 {
+            font-size: clamp(1.5rem, 3vw, 1.8rem);
+        }
+
+        .form-group { 
+            margin-bottom: 20px; 
+            text-align: <?php echo ($curr_lang == 'ar' ? 'right' : 'left'); ?>; 
+        }
+
+        .form-control { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-family: inherit; 
+            font-size: 1em;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .btn-save { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-weight: bold; 
+            font-size: 1em;
+            transition: 0.3s;
+        }
+
+        .btn-save:hover {
+            background: #0056b3;
+        }
+
+        /* Mobile Responsiveness */
+        @media screen and (max-width: 768px) {
+            body { 
+                flex-direction: column; 
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                <?php echo ($curr_lang == 'ar' ? 'right: auto; border-left: none;' : 'left: auto; border-right: none;'); ?>
+                border-bottom: 1px solid #ddd;
+                padding: 15px;
+            }
+            .sidebar ul {
+                display: flex;
+                margin: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                margin-right: 0;
+                width: 100%;
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <nav class="sidebar">
-        <h2 style="font-size: 18px;"><i class='bx bxs-hdd' style="color: #007bff;"></i> <?php echo $lang['site_title']; ?></h2>
+        <h2 style="font-size: 18px; margin-top: 0;"><i class='bx bxs-hdd' style="color: #007bff;"></i> <?php echo $lang['site_title']; ?></h2>
         <ul style="list-style: none; padding: 0;">
             <li><a href="dashboard.php" style="text-decoration: none; color: #444;"><i class='bx bx-left-arrow-alt'></i> <?php echo ($curr_lang == 'ar' ? 'الرئيسية' : 'Home'); ?></a></li>
         </ul>
